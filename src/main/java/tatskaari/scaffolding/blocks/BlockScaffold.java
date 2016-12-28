@@ -2,6 +2,9 @@ package tatskaari.scaffolding.blocks;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
+import net.minecraft.block.properties.IProperty;
+import net.minecraft.block.properties.PropertyBool;
+import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.creativetab.CreativeTabs;
@@ -25,7 +28,16 @@ import javax.annotation.Nullable;
 
 public class BlockScaffold extends Block {
     public static final String REGISTRY_NAME = "scaffold";
-    public static final AxisAlignedBB boundingBox = new AxisAlignedBB(0.4D, 0.0D, 0.4D, 0.6D, 1.0D, 0.6D);
+    public static final AxisAlignedBB CENTER_AABB = new AxisAlignedBB(0.42D, 0.0D, 0.42D, 0.58D, 1.0D, 0.58D);
+    public static final AxisAlignedBB SOUTH_AABB = new AxisAlignedBB(0.42D, 0.0D, 0.58D, 0.58D, 1.0D, 1.0D);
+    public static final AxisAlignedBB WEST_AABB = new AxisAlignedBB(0.0D, 0.0D, 0.42D, 0.42D, 1.0D, 0.58D);
+    public static final AxisAlignedBB NORTH_AABB = new AxisAlignedBB(0.42D, 0.0D, 0.0D, 0.58D, 1.0D, 0.42D);
+    public static final AxisAlignedBB EAST_AABB = new AxisAlignedBB(0.58D, 0.0D, 0.42D, 1.0D, 1.0D, 0.58D);
+
+    public static final PropertyBool northConnection = PropertyBool.create("north");
+    public static final PropertyBool southConnection = PropertyBool.create("south");
+    public static final PropertyBool eastConnection = PropertyBool.create("east");
+    public static final PropertyBool westConnection = PropertyBool.create("west");
 
     public BlockScaffold() {
         super(Material.WOOD);
@@ -33,6 +45,13 @@ public class BlockScaffold extends Block {
         setCreativeTab(CreativeTabs.BUILDING_BLOCKS);
         setUnlocalizedName("scaffolding");
         setHardness(0.075f);
+        IBlockState defaultState = blockState.getBaseState()
+                .withProperty(northConnection, false)
+                .withProperty(southConnection, false)
+                .withProperty(eastConnection, false)
+                .withProperty(westConnection, false);
+
+        setDefaultState(defaultState);
     }
 
     @SideOnly(Side.CLIENT)
@@ -41,7 +60,23 @@ public class BlockScaffold extends Block {
     }
 
     @Override
-    public AxisAlignedBB getBoundingBox(IBlockState p_getBoundingBox_1_, IBlockAccess p_getBoundingBox_2_, BlockPos p_getBoundingBox_3_) {
+    public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess access, BlockPos pos) {
+        AxisAlignedBB boundingBox = CENTER_AABB;
+        IBlockState actualState = getActualState(state, access, pos);
+
+        if (actualState.getValue(northConnection)){
+            boundingBox = boundingBox.union(NORTH_AABB);
+        }
+        if (actualState.getValue(eastConnection)){
+            boundingBox = boundingBox.union(EAST_AABB);
+        }
+        if (actualState.getValue(southConnection)){
+            boundingBox = boundingBox.union(SOUTH_AABB);
+        }
+        if (actualState.getValue(westConnection)){
+            boundingBox = boundingBox.union(WEST_AABB);
+        }
+
         return boundingBox;
     }
 
@@ -125,5 +160,36 @@ public class BlockScaffold extends Block {
     @Override
     public boolean isLadder(IBlockState p_isLadder_1_, IBlockAccess p_isLadder_2_, BlockPos p_isLadder_3_, EntityLivingBase p_isLadder_4_) {
         return true;
+    }
+
+    @Override
+    protected BlockStateContainer createBlockState() {
+        return new BlockStateContainer(this, northConnection, eastConnection, southConnection, westConnection);
+    }
+
+    @Override
+    public int getMetaFromState(IBlockState p_getMetaFromState_1_) {
+        return 0;
+    }
+
+    @Override
+    public IBlockState getStateFromMeta(int p_getStateFromMeta_1_) {
+        return getDefaultState();
+    }
+
+    @Override
+    public IBlockState getActualState(IBlockState state, IBlockAccess blockAccess, BlockPos pos) {
+
+        boolean hasScaffoldNorth = blockAccess.getBlockState(pos.north()).getBlock() == state.getBlock();
+        boolean hasScaffoldEast = blockAccess.getBlockState(pos.east()).getBlock() == state.getBlock();
+        boolean hasScaffoldSouth = blockAccess.getBlockState(pos.south()).getBlock() == state.getBlock();
+        boolean hasScaffoldWest = blockAccess.getBlockState(pos.west()).getBlock() == state.getBlock();
+
+        return state
+                .withProperty(northConnection, hasScaffoldNorth)
+                .withProperty(eastConnection, hasScaffoldEast)
+                .withProperty(southConnection, hasScaffoldSouth)
+                .withProperty(westConnection, hasScaffoldWest);
+
     }
 }
