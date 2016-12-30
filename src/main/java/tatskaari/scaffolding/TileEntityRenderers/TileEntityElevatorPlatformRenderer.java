@@ -10,19 +10,19 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import tatskaari.scaffolding.TileEntities.TileEntityElevatorPlatform;
+import tatskaari.scaffolding.TileEntities.TileEntityElevatorPiece;
 
-public class TileEntityElevatorPlatformRenderer extends TileEntitySpecialRenderer<TileEntityElevatorPlatform>{
+public class TileEntityElevatorPlatformRenderer extends TileEntitySpecialRenderer<TileEntityElevatorPiece>{
     @Override
     @SideOnly(Side.CLIENT)
-    public void renderTileEntityAt(TileEntityElevatorPlatform tileEntityElevatorPlatform, double xPos, double yPos, double zPos, float p_renderTileEntityAt_6_, int p_renderTileEntityAt_6_2) {
-        IBlockState blockStateToRender = tileEntityElevatorPlatform.getBlockStateToRender();
-        World world = tileEntityElevatorPlatform.getWorld();
+    public void renderTileEntityAt(TileEntityElevatorPiece platformPiece, double xPos, double yPos, double zPos, float p_renderTileEntityAt_6_, int p_renderTileEntityAt_6_2) {
+        IBlockState blockStateToRender = platformPiece.getBlockStateToRender();
+        World world = platformPiece.getWorld();
         Tessellator tessellator = Tessellator.getInstance();
         VertexBuffer vertexBuffer = tessellator.getBuffer();
-        BlockPos blockPos = tileEntityElevatorPlatform.getPos();
+        BlockPos blockPos = platformPiece.getPos();
 
-        double offset = tileEntityElevatorPlatform.getClientSideOffSet();
+        double offset = platformPiece.getYOffset();
 
         this.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
 

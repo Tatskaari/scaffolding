@@ -13,8 +13,10 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.registry.GameRegistry;
+import tatskaari.scaffolding.TileEntities.TileEntityElevatorController;
 import tatskaari.scaffolding.TileEntities.TileEntityElevatorPlatform;
 import tatskaari.scaffolding.TileEntityRenderers.TileEntityElevatorPlatformRenderer;
+import tatskaari.scaffolding.blocks.BlockElevatorController;
 import tatskaari.scaffolding.blocks.BlockElevatorPlatform;
 import tatskaari.scaffolding.blocks.BlockScaffold;
 
@@ -22,10 +24,15 @@ import tatskaari.scaffolding.blocks.BlockScaffold;
 public class Scaffolding {
     public static final String MODID = "scaffolding";
     public static final String VERSION = "0.1-SNAPSHOT";
+
     public static final Block BLOCK_SCAFFOLD = new BlockScaffold();
-    public static final Block BLOCK_ANIMATION_TEST = new BlockElevatorPlatform(Material.WOOD);
+    public static final Block BLOCK_ELEVATOR_PLATFORM = new BlockElevatorPlatform(Material.WOOD);
+    public static final Block BLOCK_ELEVATOR_CONTROLLER = new BlockElevatorController(Material.WOOD);
+
     public static final Item ITEM_SCAFFOLD = new ItemBlock(BLOCK_SCAFFOLD);
-    public static final Item ITEM_ANIMATION_TEST = new ItemBlock(BLOCK_ANIMATION_TEST);
+    public static final Item ITEM_ELEVATOR_PLATFORM = new ItemBlock(BLOCK_ELEVATOR_PLATFORM);
+    public static final Item ITEM_ELEVATOR_CONTROLLER = new ItemBlock(BLOCK_ELEVATOR_CONTROLLER);
+
 
     @EventHandler
     public void init(FMLInitializationEvent event){
@@ -40,10 +47,15 @@ public class Scaffolding {
 
         GameRegistry.addSmelting(Items.REEDS, new ItemStack(ITEM_SCAFFOLD, 4), 0.35f);
 
-        ITEM_ANIMATION_TEST.setRegistryName(BLOCK_ANIMATION_TEST.getRegistryName());
-        GameRegistry.register(BLOCK_ANIMATION_TEST);
-        GameRegistry.register(ITEM_ANIMATION_TEST);
-        GameRegistry.registerTileEntity(TileEntityElevatorPlatform.class, "animation_test");
+        ITEM_ELEVATOR_PLATFORM.setRegistryName(BLOCK_ELEVATOR_PLATFORM.getRegistryName());
+        ITEM_ELEVATOR_CONTROLLER.setRegistryName(BLOCK_ELEVATOR_CONTROLLER.getRegistryName());
+        GameRegistry.register(BLOCK_ELEVATOR_PLATFORM);
+        GameRegistry.register(ITEM_ELEVATOR_PLATFORM);
+        GameRegistry.register(BLOCK_ELEVATOR_CONTROLLER);
+        GameRegistry.register(ITEM_ELEVATOR_CONTROLLER);
+        GameRegistry.registerTileEntity(TileEntityElevatorController.class, "elevator_controller");
+        GameRegistry.registerTileEntity(TileEntityElevatorPlatform.class, "elevator_platform");
+        ClientRegistry.bindTileEntitySpecialRenderer(TileEntityElevatorController.class, new TileEntityElevatorPlatformRenderer());
         ClientRegistry.bindTileEntitySpecialRenderer(TileEntityElevatorPlatform.class, new TileEntityElevatorPlatformRenderer());
 
     }
