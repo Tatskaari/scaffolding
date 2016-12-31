@@ -13,16 +13,21 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import tatskaari.scaffolding.TileEntities.TileEntityBasicElevatorPart;
 
 public class TileEntityElevatorPlatformRenderer extends TileEntitySpecialRenderer<TileEntityBasicElevatorPart>{
+
     @Override
     @SideOnly(Side.CLIENT)
-    public void renderTileEntityAt(TileEntityBasicElevatorPart platformPiece, double xPos, double yPos, double zPos, float p_renderTileEntityAt_6_, int p_renderTileEntityAt_6_2) {
+    public void renderTileEntityAt(TileEntityBasicElevatorPart platformPiece, double xPos, double yPos, double zPos, float partialTicks, int unknown2) {
         IBlockState blockStateToRender = platformPiece.getBlockStateToRender();
         World world = platformPiece.getWorld();
         Tessellator tessellator = Tessellator.getInstance();
         VertexBuffer vertexBuffer = tessellator.getBuffer();
         BlockPos blockPos = platformPiece.getPos();
 
-        double offset = platformPiece.getYOffset();
+        double offset = platformPiece.getYOffset(partialTicks);
+        if (platformPiece.getController() != null){
+            platformPiece.getController().partialTick = partialTicks;
+        }
+
 
         this.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
 

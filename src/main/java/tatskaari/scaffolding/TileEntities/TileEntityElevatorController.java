@@ -21,15 +21,17 @@ public class TileEntityElevatorController extends TileEntityBasicElevatorPart im
     public static final int MOVE_UP = 99100;
     public static final int MOVE_DOWN = 99110;
 
-    private static final double SPEED = 0.05;
+    public static final double SPEED = 0.05;
 
     private boolean isFirstTick = true;
 
     private double progress = 0;
+    public double partialTick = 0;
     private boolean moving = false;
     private boolean continueMoving = false;
     private boolean neighborsUpToDate = true;
     private int direction;
+
 
     private Map<BlockPos, IBlockState> elevatorBlocks = new TreeMap<BlockPos, IBlockState>();
 
@@ -86,11 +88,19 @@ public class TileEntityElevatorController extends TileEntityBasicElevatorPart im
                 }
             }
             progress = 0;
+            TileEntity entity = worldObj.getTileEntity(pos.up());
+            if (entity instanceof TileEntityElevatorController){
+                ((TileEntityElevatorController) entity).updateElevatorBlocks();
+            }
         }
     }
 
     @Override
     public double getYOffset(){
+        return getOffsetForProgress(progress);
+    }
+
+    public double getOffsetForProgress(double progress){
         if (direction == MOVE_UP){
             return progress;
         } else if (direction == MOVE_DOWN){
@@ -98,6 +108,12 @@ public class TileEntityElevatorController extends TileEntityBasicElevatorPart im
         } else {
             return 0;
         }
+    }
+
+    @Override
+    public double getYOffset(double partialTicks) {
+        double progress = this.progress + SPEED*partialTicks;
+        return getOffsetForProgress(progress);
     }
 
     private boolean canMove(int direction){
@@ -139,7 +155,12 @@ public class TileEntityElevatorController extends TileEntityBasicElevatorPart im
 
     }
 
-    private AxisAlignedBB getAABB(World world, BlockPos pos, double lastProgress, double progress, int direction){
+    @Override
+    public TileEntityElevatorController getController() {
+        return this;
+    }
+
+    private AxisAlignedBB getAABB(World world, BlockPos pos, double lastProgress, double progress){
         double directionMultiple = MOVE_DOWN == direction ? -1 : 1;
         AxisAlignedBB restingBoundingBox = getBlockStateToRender().getBoundingBox(world, pos);
         AxisAlignedBB lastBoundingBox = restingBoundingBox.offset(0, lastProgress*directionMultiple, 0);
@@ -149,15 +170,20 @@ public class TileEntityElevatorController extends TileEntityBasicElevatorPart im
     }
 
     private void moveCollidedEntities(double lastProgress, double progress, BlockPos elevatorPos) {
-        AxisAlignedBB liftAABB = getAABB(worldObj, elevatorPos, lastProgress, progress, direction).offset(elevatorPos);
+        AxisAlignedBB liftAABB = getAABB(worldObj, elevatorPos, lastProgress, progress).offset(elevatorPos);
         List list = this.worldObj.getEntitiesWithinAABBExcludingEntity(null, liftAABB);
         if(!list.isEmpty()) {
 
             for(int i = 0; i < list.size(); ++i) {
                 Entity entity = (Entity)list.get(i);
                 if(entity.getPushReaction() != EnumPushReaction.IGNORE) {
-                    double impulse = liftAABB.maxY - entity.getEntityBoundingBox().minY;
-                    entity.moveEntity(0, impulse, 0);
+                    double impulse;
+                    if (direction == MOVE_DOWN){
+                        impulse = entity.getEntityBoundingBox().minY - liftAABB.maxY;
+                    } else {
+                        impulse = liftAABB.maxY - entity.getEntityBoundingBox().minY;
+                    }
+                    entity.motionY = impulse;
                     entity.onGround = true;
                 }
             }

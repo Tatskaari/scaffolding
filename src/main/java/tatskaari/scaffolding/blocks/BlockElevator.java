@@ -21,7 +21,11 @@ public abstract class BlockElevator extends BlockContainer {
 
         if (tileEntity instanceof TileEntityBasicElevatorPart){
             TileEntityBasicElevatorPart elevatorPiece = (TileEntityBasicElevatorPart)tileEntity;
-            return FULL_BLOCK_AABB.offset(0, elevatorPiece.getYOffset(), 0);
+            if (elevatorPiece.getController() != null){
+                return FULL_BLOCK_AABB.offset(0, elevatorPiece.getController().getYOffset(elevatorPiece.getController().partialTick), 0);
+            } else {
+                return FULL_BLOCK_AABB.offset(0, elevatorPiece.getYOffset(), 0);
+            }
         } else {
             return FULL_BLOCK_AABB;
         }

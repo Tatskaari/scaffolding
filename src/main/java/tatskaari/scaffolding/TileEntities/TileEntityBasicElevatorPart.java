@@ -20,6 +20,13 @@ public abstract class TileEntityBasicElevatorPart extends TileEntity {
         return controller.getYOffset();
     }
 
+    public double getYOffset(double partialTicks){
+        if (controller == null){
+            return 0;
+        }
+        return controller.getYOffset(partialTicks);
+    }
+
     public IBlockState getBlockStateToRender(){
         return blockStateToRender;
     }
