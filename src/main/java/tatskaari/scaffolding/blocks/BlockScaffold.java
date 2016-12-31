@@ -20,7 +20,7 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import tatskaari.scaffolding.Scaffolding;
+import tatskaari.scaffolding.ModElevators;
 
 import javax.annotation.Nullable;
 
@@ -113,7 +113,7 @@ public class BlockScaffold extends Block {
     @Override
     public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumHand hand, @Nullable ItemStack heldItem, EnumFacing side, float hitX, float hitY, float hitZ){
 
-        if (heldItem != null && heldItem.getItem() == Scaffolding.ITEM_SCAFFOLD){
+        if (heldItem != null && heldItem.getItem() == ModElevators.ITEM_SCAFFOLD){
             if (!world.isRemote){
                 placeScaffoldingAbove(world, pos, heldItem, player);
             }
@@ -134,7 +134,7 @@ public class BlockScaffold extends Block {
         BlockPos above = new BlockPos(pos.getX(), pos.getY()+1, pos.getZ());
         Block aboveNeighbouringBlock = Minecraft.getMinecraft().theWorld.getBlockState(above).getBlock();
 
-        if (aboveNeighbouringBlock == Scaffolding.BLOCK_SCAFFOLD){
+        if (aboveNeighbouringBlock == ModElevators.BLOCK_SCAFFOLD){
             harvestScaffolding(world, above);
         } else {
             world.setBlockState(pos, Blocks.AIR.getDefaultState());
@@ -147,11 +147,11 @@ public class BlockScaffold extends Block {
         Block aboveNeighbouringBlock = Minecraft.getMinecraft().theWorld.getBlockState(above).getBlock();
 
         if (aboveNeighbouringBlock == Blocks.AIR && canPlaceBlockAt(world, above)){
-            world.setBlockState(above, Scaffolding.BLOCK_SCAFFOLD.getDefaultState());
+            world.setBlockState(above, ModElevators.BLOCK_SCAFFOLD.getDefaultState());
             if (!player.isCreative()){
                 scaffoldStack.stackSize--;
             }
-        } else if (aboveNeighbouringBlock == Scaffolding.BLOCK_SCAFFOLD){
+        } else if (aboveNeighbouringBlock == ModElevators.BLOCK_SCAFFOLD){
             placeScaffoldingAbove(world, above, scaffoldStack, player);
         }
     }

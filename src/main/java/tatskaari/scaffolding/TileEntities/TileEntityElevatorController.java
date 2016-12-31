@@ -1,6 +1,5 @@
 package tatskaari.scaffolding.TileEntities;
 
-import net.minecraft.block.Block;
 import net.minecraft.block.material.EnumPushReaction;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
@@ -10,14 +9,15 @@ import net.minecraft.util.ITickable;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import tatskaari.scaffolding.ModElevators;
 import tatskaari.scaffolding.blocks.BlockElevator;
 
-import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class TileEntityElevatorController extends TileEntityElevatorPiece implements ITickable {
+public class TileEntityElevatorController extends TileEntityBasicElevatorPart implements ITickable {
     public static final int MOVE_UP = 99100;
     public static final int MOVE_DOWN = 99110;
 
@@ -26,9 +26,9 @@ public class TileEntityElevatorController extends TileEntityElevatorPiece implem
     private boolean isFirstTick = true;
 
     private double progress = 0;
-    private double lastProgress = 0;
     private boolean moving = false;
     private boolean continueMoving = false;
+    private boolean neighborsUpToDate = true;
     private int direction;
 
     private Map<BlockPos, IBlockState> elevatorBlocks = new TreeMap<BlockPos, IBlockState>();
@@ -45,7 +45,7 @@ public class TileEntityElevatorController extends TileEntityElevatorPiece implem
             isFirstTick = false;
         }
         if (moving){
-            lastProgress = progress;
+            double lastProgress = progress;
             progress+=SPEED;
 
             for (BlockPos elevatorPos : elevatorBlocks.keySet()){
@@ -53,28 +53,41 @@ public class TileEntityElevatorController extends TileEntityElevatorPiece implem
             }
 
             if (progress >= 1){
-                moveElevatorUp();
+                moveElevator(direction);
             }
+        }
+        if (!neighborsUpToDate){
+            updateElevatorBlocks();
         }
     }
 
-    private void moveElevatorUp(){
-        if (!worldObj.isRemote){
-            for (BlockPos elevatorPos : elevatorBlocks.keySet()){
-                worldObj.setBlockToAir(elevatorPos);
-                worldObj.removeTileEntity(elevatorPos);
+    private void moveElevator(int direction) {
+        if (!worldObj.isRemote) {
+            for (Iterator<BlockPos> it = elevatorBlocks.keySet().iterator(); it.hasNext();) {
+                BlockPos elevatorPos = it.next();
+                if (worldObj.isAirBlock(elevatorPos)){
+                    it.remove();
+                } else {
+                    worldObj.setBlockToAir(elevatorPos);
+                    worldObj.removeTileEntity(elevatorPos);
+                }
             }
-            for (BlockPos elevatorPos : elevatorBlocks.keySet()){
-                BlockPos nextPosition = elevatorPos.up();
+            for (BlockPos elevatorPos : elevatorBlocks.keySet()) {
+                BlockPos nextPosition;
+                if (direction == MOVE_DOWN){
+                    nextPosition = elevatorPos.down();
+                } else {
+                    nextPosition = elevatorPos.up();
+                }
                 IBlockState blockState = elevatorBlocks.get(elevatorPos);
                 worldObj.setBlockState(nextPosition, blockState);
+                if (continueMoving && blockState.getBlock() == ModElevators.BLOCK_ELEVATOR_CRANK) {
+                    worldObj.addBlockEvent(nextPosition, ModElevators.BLOCK_ELEVATOR_CRANK, direction, 0);
+                }
             }
             progress = 0;
         }
     }
-
-
-
 
     @Override
     public double getYOffset(){
@@ -87,13 +100,33 @@ public class TileEntityElevatorController extends TileEntityElevatorPiece implem
         }
     }
 
-    public void toggleMovingUp(){
+    private boolean canMove(int direction){
+        updateElevatorBlocks();
+
+        for (BlockPos pos : elevatorBlocks.keySet()){
+            BlockPos nextBlockPos;
+
+            if (direction == MOVE_DOWN){
+                nextBlockPos = pos.down();
+            } else {
+                nextBlockPos = pos.up();
+            }
+
+            IBlockState nextBlockState = worldObj.getBlockState(nextBlockPos);
+            if (!(elevatorBlocks.containsKey(nextBlockPos) || nextBlockState == Blocks.AIR.getDefaultState())){
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public void toggleMoving(int direction){
         if (!moving){
-            Block blockAbove = worldObj.getBlockState(getPos().up()).getBlock();
-            if (blockAbove == Blocks.AIR){
+            if (canMove(direction)){
                 moving = true;
                 continueMoving = true;
-                direction = MOVE_UP;
+                this.direction = direction;
             }
         }
         else {
@@ -102,25 +135,21 @@ public class TileEntityElevatorController extends TileEntityElevatorPiece implem
     }
 
     @Override
-    protected double getProgress() {
-        return progress;
-    }
-
-    @Override
     public void setController(TileEntityElevatorController controller) {
 
     }
 
-    private AxisAlignedBB getAABB(World world, BlockPos pos, double lastProgress, double progress){
+    private AxisAlignedBB getAABB(World world, BlockPos pos, double lastProgress, double progress, int direction){
+        double directionMultiple = MOVE_DOWN == direction ? -1 : 1;
         AxisAlignedBB restingBoundingBox = getBlockStateToRender().getBoundingBox(world, pos);
-        AxisAlignedBB lastBoundingBox = restingBoundingBox.offset(0, lastProgress, 0);
-        AxisAlignedBB newBoundingBox = restingBoundingBox.offset(0, progress, 0);
+        AxisAlignedBB lastBoundingBox = restingBoundingBox.offset(0, lastProgress*directionMultiple, 0);
+        AxisAlignedBB newBoundingBox = restingBoundingBox.offset(0, progress*directionMultiple, 0);
 
         return lastBoundingBox.union(newBoundingBox);
     }
 
     private void moveCollidedEntities(double lastProgress, double progress, BlockPos elevatorPos) {
-        AxisAlignedBB liftAABB = getAABB(this.worldObj, elevatorPos, lastProgress, progress).offset(elevatorPos);
+        AxisAlignedBB liftAABB = getAABB(worldObj, elevatorPos, lastProgress, progress, direction).offset(elevatorPos);
         List list = this.worldObj.getEntitiesWithinAABBExcludingEntity(null, liftAABB);
         if(!list.isEmpty()) {
 
@@ -159,17 +188,30 @@ public class TileEntityElevatorController extends TileEntityElevatorPiece implem
         return elevators;
     }
 
-    public void updateElevatorBlocks(){
+    private void updateElevatorBlocks(){
         elevatorBlocks.clear();
         elevatorBlocks.put(getPos(), worldObj.getBlockState(getPos()));
         elevatorBlocks = getConnectedElevatorBlocks(worldObj, pos, elevatorBlocks);
         for (BlockPos elevatorPos : elevatorBlocks.keySet()){
             TileEntity tileEntity = worldObj.getTileEntity(elevatorPos);
-            if (tileEntity instanceof TileEntityElevatorPiece){
-                ((TileEntityElevatorPiece) tileEntity).setController(this);
+            if (tileEntity instanceof TileEntityBasicElevatorPart){
+                ((TileEntityBasicElevatorPart) tileEntity).setController(this);
             }
         }
+        neighborsUpToDate = true;
     }
 
 
+    public boolean processMessage(int message) {
+        if (message == MOVE_DOWN || message == MOVE_UP){
+            toggleMoving(message);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public void onElevatorBlocksChanged() {
+        neighborsUpToDate = false;
+    }
 }

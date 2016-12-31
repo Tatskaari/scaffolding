@@ -10,12 +10,12 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import tatskaari.scaffolding.TileEntities.TileEntityElevatorPiece;
+import tatskaari.scaffolding.TileEntities.TileEntityBasicElevatorPart;
 
-public class TileEntityElevatorPlatformRenderer extends TileEntitySpecialRenderer<TileEntityElevatorPiece>{
+public class TileEntityElevatorPlatformRenderer extends TileEntitySpecialRenderer<TileEntityBasicElevatorPart>{
     @Override
     @SideOnly(Side.CLIENT)
-    public void renderTileEntityAt(TileEntityElevatorPiece platformPiece, double xPos, double yPos, double zPos, float p_renderTileEntityAt_6_, int p_renderTileEntityAt_6_2) {
+    public void renderTileEntityAt(TileEntityBasicElevatorPart platformPiece, double xPos, double yPos, double zPos, float p_renderTileEntityAt_6_, int p_renderTileEntityAt_6_2) {
         IBlockState blockStateToRender = platformPiece.getBlockStateToRender();
         World world = platformPiece.getWorld();
         Tessellator tessellator = Tessellator.getInstance();

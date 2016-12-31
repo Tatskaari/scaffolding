@@ -2,7 +2,6 @@ package tatskaari.scaffolding.blocks;
 
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
@@ -15,11 +14,11 @@ import tatskaari.scaffolding.TileEntities.TileEntityElevatorController;
 
 import javax.annotation.Nullable;
 
-public class BlockElevatorController extends BlockElevator {
-    public BlockElevatorController(Material material) {
+public class BlockElevatorCrank extends BlockElevator {
+    public BlockElevatorCrank(Material material) {
         super(material);
-        setRegistryName("elevator_controller");
-        setUnlocalizedName("elevator_controller");
+        setRegistryName("elevator_crank");
+        setUnlocalizedName("elevator_crank");
         setHardness(0.5f);
     }
 
@@ -30,13 +29,11 @@ public class BlockElevatorController extends BlockElevator {
 
     @Override
     public boolean eventReceived(IBlockState state, World world, BlockPos pos, int message1, int message2) {
-        if (message1 == TileEntityElevatorController.MOVE_UP){
-            TileEntity tileEntity = world.getTileEntity(pos);
-            if (tileEntity instanceof TileEntityElevatorController){
-                ((TileEntityElevatorController)tileEntity).toggleMovingUp();
-                return true;
-            }
+        TileEntity tileEntity = world.getTileEntity(pos);
+        if (tileEntity instanceof TileEntityElevatorController){
+            return ((TileEntityElevatorController)tileEntity).processMessage(message1);
         }
+
         return false;
     }
 
