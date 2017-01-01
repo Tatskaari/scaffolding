@@ -9,6 +9,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import tatskaari.scaffolding.TileEntities.TileEntityBasicElevatorPart;
+import tatskaari.scaffolding.TileEntities.TileEntityElevatorController;
 
 public abstract class BlockElevator extends BlockContainer {
     protected BlockElevator(Material material) {
@@ -22,9 +23,13 @@ public abstract class BlockElevator extends BlockContainer {
         if (tileEntity instanceof TileEntityBasicElevatorPart){
             TileEntityBasicElevatorPart elevatorPiece = (TileEntityBasicElevatorPart)tileEntity;
             if (elevatorPiece.getController() != null){
-                return FULL_BLOCK_AABB.offset(0, elevatorPiece.getController().getYOffset(elevatorPiece.getController().partialTick), 0);
+                TileEntityElevatorController controller = elevatorPiece.getController();
+//                if (controller.isMoving()){
+//                    controller.moveCollidedEntities(controller.getProgress(), controller.getPatialTickProgress(), pos);
+//                }
+                return FULL_BLOCK_AABB.offset(0, controller.getYOffset(controller.partialTick), 0);
             } else {
-                return FULL_BLOCK_AABB.offset(0, elevatorPiece.getYOffset(), 0);
+                return FULL_BLOCK_AABB;
             }
         } else {
             return FULL_BLOCK_AABB;

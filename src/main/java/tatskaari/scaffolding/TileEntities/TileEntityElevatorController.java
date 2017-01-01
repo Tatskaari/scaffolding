@@ -54,8 +54,10 @@ public class TileEntityElevatorController extends TileEntityBasicElevatorPart im
                 moveCollidedEntities(lastProgress, progress, elevatorPos);
             }
 
-            if (progress >= 1){
-                moveElevator(direction);
+            if (!worldObj.isRemote){
+                if (progress >= 1){
+                    moveElevator(direction);
+                }
             }
         }
         if (!neighborsUpToDate){
@@ -112,8 +114,11 @@ public class TileEntityElevatorController extends TileEntityBasicElevatorPart im
 
     @Override
     public double getYOffset(double partialTicks) {
-        double progress = this.progress + SPEED*partialTicks;
-        return getOffsetForProgress(progress);
+        if (moving){
+            double progress = this.progress + SPEED*partialTicks;
+            return getOffsetForProgress(progress);
+        }
+        return 0;
     }
 
     private boolean canMove(int direction){
@@ -169,20 +174,23 @@ public class TileEntityElevatorController extends TileEntityBasicElevatorPart im
         return lastBoundingBox.union(newBoundingBox);
     }
 
-    private void moveCollidedEntities(double lastProgress, double progress, BlockPos elevatorPos) {
+    public void moveCollidedEntities(double lastProgress, double progress, BlockPos elevatorPos) {
         AxisAlignedBB liftAABB = getAABB(worldObj, elevatorPos, lastProgress, progress).offset(elevatorPos);
-        List list = this.worldObj.getEntitiesWithinAABBExcludingEntity(null, liftAABB);
+        List list;
+        if (direction == MOVE_UP){
+            list = this.worldObj.getEntitiesWithinAABBExcludingEntity(null, liftAABB);
+        } else {
+            list = this.worldObj.getEntitiesWithinAABBExcludingEntity(null, liftAABB.offset(0, 0.5, 0));
+        }
         if(!list.isEmpty()) {
 
             for(int i = 0; i < list.size(); ++i) {
                 Entity entity = (Entity)list.get(i);
                 if(entity.getPushReaction() != EnumPushReaction.IGNORE) {
                     double impulse;
-                    if (direction == MOVE_DOWN){
-                        impulse = entity.getEntityBoundingBox().minY - liftAABB.maxY;
-                    } else {
-                        impulse = liftAABB.maxY - entity.getEntityBoundingBox().minY;
-                    }
+
+                    impulse = liftAABB.maxY - entity.getEntityBoundingBox().minY;
+
                     entity.motionY = impulse;
                     entity.onGround = true;
                 }
@@ -239,5 +247,13 @@ public class TileEntityElevatorController extends TileEntityBasicElevatorPart im
     @Override
     public void onElevatorBlocksChanged() {
         neighborsUpToDate = false;
+    }
+
+    public double getProgress() {
+        return progress;
+    }
+
+    public double getPatialTickProgress() {
+        return progress+SPEED*partialTick;
     }
 }
